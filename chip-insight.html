@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ChipInsight 2026 · 芯片行业发展前沿调研平台 | 完整版</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #161d2a;
+            --bg-card-hover: #1c2435;
+            --border: #1e2d45;
+            --border-light: #263348;
+            --accent: #00d4ff;
+            --accent2: #6c5ce7;
+            --accent3: #00e5a0;
+            --accent4: #ff6b6b;
+            --accent5: #ffa94d;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0b4cc;
+            --text-muted: #64748b;
+            --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+            --font-mono: 'SF Mono','Cascadia Code','JetBrains Mono','Consolas',monospace;
+            --font-sans: 'Inter','PingFang SC','Microsoft YaHei','Segoe UI',system-ui,sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:var(--font-sans);
+            background:var(--bg-primary);
+            color:var(--text-primary);
+            min-height:100vh;
+            overflow-x:hidden;
+            line-height:1.6;
+            -webkit-font-smoothing:antialiased;
+        }
+        #particleCanvas {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            z-index:0; pointer-events:none; opacity:0.55;
+        }
+        .auth-overlay {
+            position:fixed; inset:0; z-index:100;
+            display:flex; align-items:center; justify-content:center;
+            background:rgba(5,8,15,0.85); backdrop-filter:blur(12px);
+            transition:opacity 0.4s ease;
+        }
+        .auth-overlay.hidden { opacity:0; pointer-events:none; }
+        .auth-card {
+            background:var(--bg-secondary); border:1px solid var(--border);
+            border-radius:var(--radius-lg); padding:40px 36px;
+            width:100%; max-width:440px; box-shadow:var(--shadow-lg);
+            position:relative; overflow:hidden;
+        }
+        .auth-card::before {
+            content:''; position:absolute; top:-60px; right:-60px;
+            width:180px; height:180px;
+            background:radial-gradient(circle,rgba(0,212,255,0.08) 0%,transparent 70%);
+            border-radius:50%; pointer-events:none;
+        }
+        .auth-card::after {
+            content:''; position:absolute; bottom:-40px; left:-40px;
+            width:140px; height:140px;
+            background:radial-gradient(circle,rgba(108,92,231,0.07) 0%,transparent 70%);
+            border-radius:50%; pointer-events:none;
+        }
+        .auth-logo { text-align:center; margin-bottom:28px; position:relative; z-index:1; }
+        .auth-logo .icon-chip { font-size:48px; display:block; margin-bottom:8px; filter:drop-shadow(0 0 20px rgba(0,212,255,0.4)); animation:float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        .auth-logo h1 { font-size:1.8rem; font-weight:700; background:linear-gradient(135deg,var(--accent),#8eb8ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .auth-logo .subtitle { font-size:0.85rem; color:var(--text-muted); letter-spacing:0.08em; margin-top:2px; }
+        .auth-tabs { display:flex; margin-bottom:24px; border-bottom:2px solid var(--border); position:relative; z-index:1; }
+        .auth-tab { flex:1; padding:12px; text-align:center; cursor:pointer; font-weight:600; font-size:0.95rem; color:var(--text-muted); background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; font-family:var(--font-sans); transition:var(--transition); }
+        .auth-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+        .auth-tab:hover { color:var(--text-secondary); }
+        .auth-form { position:relative; z-index:1; display:flex; flex-direction:column; gap:16px; }
+        .auth-form.hidden-form { display:none; }
+        .input-group label { display:block; font-size:0.8rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; }
+        .input-group input { width:100%; padding:12px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-size:0.95rem; font-family:var(--font-sans); outline:none; transition:var(--transition); }
+        .input-group input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,212,255,0.1); }
+        .btn { padding:12px 24px; border-radius:var(--radius-sm); font-weight:600; font-size:0.95rem; cursor:pointer; border:none; font-family:var(--font-sans); transition:var(--transition); display:flex; align-items:center; justify-content:center; gap:8px; }
+        .btn-primary { background:linear-gradient(135deg,#0098c7,#00b8e6); color:#fff; box-shadow:0 4px 16px rgba(0,180,220,0.3); }
+        .btn-primary:hover { box-shadow:0 6px 24px rgba(0,200,240,0.45); transform:translateY(-1px); }
+        .btn-outline { background:transparent; border:1px solid var(--border-light); color:var(--text-secondary); }
+        .btn-outline:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,0.04); }
+        .btn-sm { padding:8px 16px; font-size:0.8rem; border-radius:20px; }
+        .auth-error { color:var(--accent4); font-size:0.82rem; text-align:center; min-height:20px; }
+        .dashboard { display:none; width:100%; max-width:1440px; margin:0 auto; padding:20px; position:relative; z-index:1; }
+        .dashboard.active { display:block; }
+        .dashboard-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px; padding:20px 24px; background:var(--bg-secondary); border-radius:var(--radius-lg); border:1px solid var(--border); box-shadow:var(--shadow-card); }
+        .dash-logo { display:flex; align-items:center; gap:12px; }
+        .dash-logo .icon { font-size:32px; }
+        .dash-logo h2 { font-size:1.3rem; font-weight:700; }
+        .dash-logo .ver { font-size:0.7rem; color:var(--accent5); font-weight:600; }
+        .header-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .user-info { display:flex; align-items:center; gap:8px; background:var(--bg-card); padding:8px 14px; border-radius:24px; border:1px solid var(--border); font-size:0.85rem; color:var(--text-secondary); }
+        .user-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--accent2),var(--accent)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; color:#fff; }
+        .search-bar { display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; padding:6px 16px; min-width:260px; transition:var(--transition); }
+        .search-bar:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,212,255,0.08); }
+        .search-bar input { background:transparent; border:none; color:var(--text-primary); font-size:0.9rem; outline:none; font-family:var(--font-sans); flex:1; }
+        .search-bar input::placeholder { color:var(--text-muted); }
+        .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px; transition:var(--transition); }
+        .stat-card:hover { border-color:var(--border-light); box-shadow:var(--shadow-card); transform:translateY(-2px); background:var(--bg-card-hover); }
+        .stat-card .stat-icon { font-size:28px; margin-bottom:8px; }
+        .stat-card .stat-value { font-size:1.8rem; font-weight:700; font-family:var(--font-mono); }
+        .stat-card .stat-label { font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
+        .main-content { display:grid; grid-template-columns:1fr 340px; gap:20px; }
+        @media(max-width:1100px){ .main-content{grid-template-columns:1fr} .detail-panel{position:static; margin-top:20px} }
+        .section-title { font-size:1.05rem; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .section-title .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); animation:pulse-dot 1.8s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%,100%{box-shadow:0 0 6px var(--accent)} 50%{box-shadow:0 0 18px var(--accent),0 0 30px rgba(0,212,255,0.5)} }
+        .card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+        .info-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px; cursor:pointer; transition:var(--transition); position:relative; }
+        .info-card:hover { border-color:var(--accent); box-shadow:0 8px 32px rgba(0,0,0,0.4); transform:translateY(-2px); background:var(--bg-card-hover); }
+        .card-tag { display:inline-block; font-size:0.7rem; padding:3px 10px; border-radius:14px; font-weight:600; text-transform:uppercase; margin-bottom:10px; }
+        .tag-free { background:rgba(0,229,160,0.12); color:var(--accent3); border:1px solid rgba(0,229,160,0.3); }
+        .tag-paid { background:rgba(255,169,77,0.15); color:var(--accent5); border:1px solid rgba(255,169,77,0.4); }
+        .info-card h4 { font-size:0.95rem; font-weight:700; margin-bottom:6px; }
+        .info-card p { font-size:0.82rem; color:var(--text-secondary); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+        .card-meta { display:flex; justify-content:space-between; margin-top:10px; font-size:0.72rem; color:var(--text-muted); }
+        .detail-panel { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; position:sticky; top:20px; max-height:calc(100vh - 40px); overflow-y:auto; box-shadow:var(--shadow-card); }
+        .detail-panel h3 { font-size:1.1rem; font-weight:700; margin-bottom:4px; }
+        .detail-subtitle { font-size:0.75rem; color:var(--text-muted); margin-bottom:16px; }
+        .detail-section { margin-bottom:16px; }
+        .detail-section h5 { font-size:0.78rem; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:6px; }
+        .detail-section p,.detail-section li { font-size:0.82rem; color:var(--text-secondary); }
+        .detail-section ul { list-style:none; padding:0; }
+        .detail-section ul li { padding:4px 0 4px 16px; position:relative; }
+        .detail-section ul li::before { content:'▸'; position:absolute; left:0; color:var(--accent); }
+        .detail-empty { text-align:center; padding:40px 20px; color:var(--text-muted); }
+        .detail-empty .icon { font-size:48px; display:block; margin-bottom:12px; opacity:0.5; }
+        .toast { position:fixed; top:20px; right:20px; z-index:999; padding:14px 20px; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600; color:#fff; opacity:0; transform:translateX(40px); transition:all 0.35s ease; pointer-events:none; }
+        .toast.show { opacity:1; transform:translateX(0); }
+        .toast.success { background:#0d7c4b; }
+        .toast.error { background:#b83a3a; }
+        .toast.info { background:#1a5f8a; }
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+        .modal-overlay.active { opacity:1; pointer-events:auto; }
+        .modal-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-lg); padding:32px; max-width:420px; width:90%; text-align:center; box-shadow:var(--shadow-lg); }
+        .modal-box h3 { font-size:1.2rem; margin-bottom:16px; }
+        .modal-box .contact-info { background:var(--bg-card); padding:16px; border-radius:var(--radius-sm); margin:16px 0; font-size:0.9rem; }
+        .modal-box .contact-info strong { color:var(--accent); }
+        .footer-note { text-align:center; padding:20px; font-size:0.72rem; color:var(--text-muted); border-top:1px solid var(--border); margin-top:30px; }
+        ::-webkit-scrollbar { width:5px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border-light); border-radius:10px; }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    <div class="toast" id="toast"></div>
+    <!-- 模态弹窗 (动态支持显示标题) -->
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal-box">
+            <h3>📬 获取完整内容</h3>
+            <p style="color:var(--text-secondary);margin-bottom:6px;">您正在查看：<strong id="modalResourceName"></strong></p>
+            <p style="color:var(--text-secondary);margin-bottom:8px;">此为付费资源，请通过以下方式联系：</p>
+            <div class="contact-info">
+                <p>📧 邮箱：<strong>chipinsight@semicon.cn</strong></p>
+                <p>💬 微信：<strong>ChipInsight_2026</strong></p>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-muted);">请备注资源名称，我们将及时提供商务对接。</p>
+            <button class="btn btn-outline btn-sm" id="closeModalBtn" style="margin-top:12px;">关闭</button>
+        </div>
+    </div>
+
+    <!-- 登录注册 -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <span class="icon-chip">🔬</span>
+                <h1>ChipInsight 2026</h1>
+                <p class="subtitle">芯片行业发展前沿 · 调研平台</p>
+            </div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLogin">登 录</button>
+                <button class="auth-tab" id="tabRegister">注 册</button>
+            </div>
+            <form class="auth-form" id="loginForm">
+                <div class="input-group"><label>👤 用户名</label><input type="text" id="loginUsername" placeholder="请输入用户名" required autocomplete="username" maxlength="20"></div>
+                <div class="input-group"><label>🔒 密码</label><input type="password" id="loginPassword" placeholder="请输入密码" required autocomplete="current-password"></div>
+                <div class="auth-error" id="loginError"></div>
+                <button type="submit" class="btn btn-primary">🔐 登录平台</button>
+            </form>
+            <form class="auth-form hidden-form" id="registerForm">
+                <div class="input-group"><label>👤 用户名</label><input type="text" id="regUsername" placeholder="4-20位字母、数字或中文" required minlength="4" maxlength="20" pattern="[a-zA-Z0-9\u4e00-\u9fa5_]+" autocomplete="off"></div>
+                <div class="input-group"><label>📧 邮箱（选填）</label><input type="email" id="regEmail" placeholder="用于找回密码（可选）" autocomplete="off"></div>
+                <div class="input-group"><label>🔒 密码</label><input type="password" id="regPassword" placeholder="至少6位" required minlength="6" autocomplete="new-password"></div>
+                <div class="input-group"><label>🔒 确认密码</label><input type="password" id="regPasswordConfirm" placeholder="再次输入密码" required minlength="6" autocomplete="new-password"></div>
+                <div class="auth-error" id="registerError"></div>
+                <button type="submit" class="btn btn-primary">📝 创建账号</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 仪表盘 -->
+    <div class="dashboard" id="dashboard">
+        <div class="dashboard-header">
+            <div class="dash-logo"><span class="icon">🔬</span><div><h2>ChipInsight 2026 <span class="ver">商业版</span></h2><span style="font-size:0.72rem;color:var(--text-muted);">芯片行业知识展示与交易平台</span></div></div>
+            <div class="header-actions"><div class="search-bar"><span class="search-icon">🔍</span><input type="text" id="searchInput" placeholder="搜索芯片技术、制程、架构..."></div><div class="user-info"><div class="user-avatar" id="userAvatar">A</div><span id="userDisplayName">admin</span></div><button class="btn btn-outline btn-sm" id="logoutBtn">退出登录</button></div>
+        </div>
+        <div class="stats-row"><div class="stat-card accent-blue"><div class="stat-icon">📊</div><div class="stat-value" id="statTechCount">8</div><div class="stat-label">内容条目</div></div><div class="stat-card accent-purple"><div class="stat-icon">🆓</div><div class="stat-value" id="statFreeCount">5</div><div class="stat-label">免费内容</div></div><div class="stat-card accent-orange"><div class="stat-icon">💼</div><div class="stat-value" id="statPaidCount">3</div><div class="stat-label">可购内容</div></div><div class="stat-card accent-green"><div class="stat-icon">👥</div><div class="stat-value" id="statUserCount">0</div><div class="stat-label">注册用户</div></div></div>
+        <div class="main-content"><div class="content-left"><div class="section-title"><span class="dot"></span> 芯片行业前沿内容概览</div><div class="card-grid" id="cardGrid"></div></div><div class="detail-panel" id="detailPanel"><div class="detail-empty"><span class="icon">📋</span><p>👈 点击左侧卡片查看详情</p></div></div></div>
+        <div class="footer-note"><p>🔒 本站不追踪用户行为，所有数据存储于您的浏览器本地。</p><p>📧 联系方式：chipinsight@semicon.cn | 微信：ChipInsight_2026</p></div>
+    </div>
+
+    <script>
+        (function(){
+            // ---------- 加密与用户存储核心 ----------
+            const USERS_KEY = 'chipinsight_users_v2';
+            const CURRENT_USER_KEY = 'chipinsight_current_user';
+            async function sha256(m){ const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(m)); return Array.from(new Uint8Array(buf), x => x.toString(16).padStart(2,'0')).join(''); }
+            function generateSalt(){ return Array.from(crypto.getRandomValues(new Uint8Array(16)), x => x.toString(16).padStart(2,'0')).join(''); }
+            async function hashPassword(p,s){ return await sha256(p+s); }
+            function getUsers(){ try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; }catch{ return {}; } }
+            function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); updateUserStat(); }
+            function getUser(username){ return getUsers()[username] || null; }
+            function setCurrentUser(username){ localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({username, loginTime: new Date().toISOString()})); }
+            function clearCurrentUser(){ localStorage.removeItem(CURRENT_USER_KEY); }
+            function getCurrentUser(){ try{ return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }catch{ return null; } }
+            function updateUserStat(){ const cnt = Object.keys(getUsers()).length; const el = document.getElementById('statUserCount'); if(el) el.innerText = cnt; }
+
+            // 初始化默认账户（admin/admin2026, researcher/chip2026）
+            async function initDefaultAccounts(){
+                const users = getUsers();
+                if(Object.keys(users).length === 0){
+                    const defaultList = [{username:'admin',pwd:'admin2026'},{username:'researcher',pwd:'chip2026'}];
+                    for(const acc of defaultList){
+                        const salt = generateSalt();
+                        const hash = await hashPassword(acc.pwd, salt);
+                        users[acc.username] = { salt, hash, email: '', createdAt: new Date().toISOString(), role: 'user', failedAttempts: 0, lockUntil: null };
+                    }
+                    saveUsers(users);
+                } else { updateUserStat(); }
+            }
+
+            // ---------- 芯片数据库 ----------
+            const chipDatabase = [
+                { id:'1', title:'2026全球半导体展览会汇总', tag:'tag-free', tagText:'免费', icon:'📅', summary:'整理2026年全球主要半导体展览会日程及参展信息，包括Semicon China、ISSCC等。', details:{'内容概述':'展会时间、地点、主题、报名链接','适用人群':'从业者、学生','更新频率':'季度更新'}, year:'2026', isPaid:false },
+                { id:'2', title:'2nm GAA制程技术简介', tag:'tag-free', tagText:'免费', icon:'🏗️', summary:'GAA晶体管架构取代FinFET，2nm节点预计2026年量产。', details:{'技术概述':'全环绕栅极晶体管，更好静电控制','行业意义':'延续摩尔定律','来源':'公开学术论文'}, year:'2026', isPaid:false },
+                { id:'3', title:'RISC-V指令集架构入门', tag:'tag-free', tagText:'免费', icon:'🔧', summary:'开源指令集架构，从嵌入式向高性能计算渗透。', details:{'生态现状':'累计出货超100亿颗','主要参与者':'SiFive、阿里平头哥','学习资源':'官方文档、社区论坛'}, year:'2026', isPaid:false },
+                { id:'4', title:'Chiplet与UCIe互连标准解读', tag:'tag-free', tagText:'免费', icon:'🧩', summary:'UCIe 2.0标准推动Chiplet生态成熟。', details:{'技术要点':'物理层规范、协议层设计','行业应用':'数据中心CPU、AI加速器','标准化进展':'UCIe联盟超150家'}, year:'2026', isPaid:false },
+                { id:'5', title:'宽禁带半导体材料基础', tag:'tag-free', tagText:'免费', icon:'⚡', summary:'GaN和SiC材料特性，电动汽车与数据中心电源应用。', details:{'材料特性':'高击穿电场、高频','应用领域':'电动汽车逆变器、快充','市场趋势':'2026年超150亿美元'}, year:'2026', isPaid:false },
+                { id:'6', title:'2026 AI芯片市场深度分析', tag:'tag-paid', tagText:'可购', icon:'🧠', summary:'AI芯片市场规模、竞争格局、技术路线分析报告。', details:{'报告内容':'市场预测、厂商格局、技术对比','数据来源':'多方公开数据','交付形式':'PDF报告约15页'}, year:'2026', isPaid:true, price:'19.9元' },
+                { id:'7', title:'先进封装技术路线图（2026-2030）', tag:'tag-paid', tagText:'可购', icon:'📦', summary:'Hybrid Bonding、CoWoS、EMIB等先进封装发展路线。', details:{'涵盖技术':'Hybrid Bonding, CoWoS, EMIB','时间跨度':'2026-2030','关键指标':'互连密度、热管理'}, year:'2026', isPaid:true, price:'29.9元' },
+                { id:'8', title:'可商用技术文档：存算一体架构实现方案', tag:'tag-paid', tagText:'可购', icon:'💾', summary:'基于公开专利的存算一体实施方案，供技术选型。', details:{'文档内容':'SRAM-CIM/RRAM-CIM方案对比','商用授权':'内部技术评估','交付形式':'PDF约20页'}, year:'2026', isPaid:true, price:'29.9元' }
+            ];
+
+            function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+            function updateStats(){ 
+                const free = chipDatabase.filter(c=>!c.isPaid).length; 
+                const paid = chipDatabase.filter(c=>c.isPaid).length; 
+                document.getElementById('statTechCount').innerText = chipDatabase.length;
+                document.getElementById('statFreeCount').innerText = free;
+                document.getElementById('statPaidCount').innerText = paid;
+            }
+            
+            // 渲染卡片（事件绑定彻底分离）
+            function renderCards(filterText=''){
+                const grid = document.getElementById('cardGrid');
+                if(!grid) return;
+                const term = filterText.toLowerCase().trim();
+                let filtered = chipDatabase;
+                if(term) filtered = chipDatabase.filter(item => (item.title+item.summary+item.tagText+(item.price||'')).toLowerCase().includes(term));
+                if(filtered.length === 0){
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);"><span style="font-size:40px;">🔍</span><p>无匹配结果</p></div>';
+                    return;
+                }
+                grid.innerHTML = filtered.map(item => `
+                    <div class="info-card" data-id="${item.id}" data-paid="${item.isPaid}">
+                        <span class="card-tag ${item.tag}">${item.tagText}${item.isPaid ? ' · '+item.price : ''}</span>
+                        <h4>${escapeHtml(item.icon)} ${escapeHtml(item.title)}</h4>
+                        <p>${escapeHtml(item.summary)}</p>
+                        <div class="card-meta"><span>📅 ${item.year}</span><span>${item.isPaid ? '🔒 商务获取' : '📖 免费阅读'}</span></div>
+                    </div>
+                `).join('');
+                // 绑定卡片点击事件
+                document.querySelectorAll('.info-card').forEach(card => {
+                    const isPaid = card.getAttribute('data-paid') === 'true';
+                    const id = card.getAttribute('data-id');
+                    card.onclick = () => {
+                        if(isPaid){
+                            showPaidModal(id);
+                        } else {
+                            showFreeDetail(id);
+                        }
+                    };
+                });
+            }
+            
+            // 免费详情展示
+            function showFreeDetail(id){
+                const item = chipDatabase.find(c => c.id === id);
+                if(!item || item.isPaid) return;
+                const panel = document.getElementById('detailPanel');
+                let html = `<h3>${escapeHtml(item.icon)} ${escapeHtml(item.title)}</h3><p class="detail-subtitle">${item.tagText} · ${item.year}</p>`;
+                for(const [key, val] of Object.entries(item.details)){
+                    if(Array.isArray(val)){
+                        html += `<div class="detail-section"><h5>${escapeHtml(key)}</h5><ul>${val.map(v=>`<li>${escapeHtml(v)}</li>`).join('')}</ul></div>`;
+                    } else {
+                        html += `<div class="detail-section"><h5>${escapeHtml(key)}</h5><p>${escapeHtml(String(val))}</p></div>`;
+                    }
+                }
+                panel.innerHTML = html;
+            }
+            
+            // 弹出付费咨询模态框 (展示资源名称)
+            function showPaidModal(id){
+                const item = chipDatabase.find(c => c.id === id);
+                if(!item) return;
+                const modal = document.getElementById('contactModal');
+                const resourceSpan = document.getElementById('modalResourceName');
+                if(resourceSpan) resourceSpan.innerText = `${item.icon} ${item.title} (${item.price})`;
+                modal.classList.add('active');
+            }
+            
+            function closeModal(){
+                document.getElementById('contactModal').classList.remove('active');
+            }
+            
+            // 搜索输入
+            window.handleSearch = function(){ 
+                const kw = document.getElementById('searchInput').value; 
+                renderCards(kw); 
+            };
+            
+            // ---------- 认证业务 ----------
+            async function handleLogin(e){
+                e.preventDefault();
+                const username = document.getElementById('loginUsername').value.trim();
+                const pwd = document.getElementById('loginPassword').value;
+                const errDiv = document.getElementById('loginError');
+                if(!username || !pwd){ errDiv.innerText = '用户名/密码不能为空'; return; }
+                const user = getUser(username);
+                if(!user){ errDiv.innerText = '用户不存在'; return; }
+                if(user.lockUntil && new Date(user.lockUntil) > new Date()){
+                    errDiv.innerText = `账户锁定至 ${new Date(user.lockUntil).toLocaleTimeString()}`; return;
+                }
+                const hash = await hashPassword(pwd, user.salt);
+                if(hash === user.hash){
+                    user.failedAttempts = 0; user.lockUntil = null;
+                    const users = getUsers(); users[username] = user; saveUsers(users);
+                    setCurrentUser(username);
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    document.getElementById('dashboard').classList.add('active');
+                    const avatar = document.getElementById('userAvatar');
+                    const nameSpan = document.getElementById('userDisplayName');
+                    avatar.innerText = username.charAt(0).toUpperCase();
+                    nameSpan.innerText = username;
+                    showToast(`欢迎回来，${username}`, 'success');
+                    renderCards('');
+                    updateStats();
+                    // 重置右侧详情面板为初始状态
+                    document.getElementById('detailPanel').innerHTML = `<div class="detail-empty"><span class="icon">📋</span><p>👈 点击左侧卡片查看详情</p></div>`;
+                } else {
+                    user.failedAttempts = (user.failedAttempts||0)+1;
+                    const remain = 5 - user.failedAttempts;
+                    if(user.failedAttempts >= 5){
+                        const lockUntil = new Date(Date.now()+5*60*1000).toISOString();
+                        user.lockUntil = lockUntil;
+                        errDiv.innerText = '错误次数过多，账户已锁定5分钟';
+                    } else {
+                        errDiv.innerText = `密码错误，还剩${remain}次机会`;
+                    }
+                    const users = getUsers(); users[username] = user; saveUsers(users);
+                }
+            }
+            
+            async function handleRegister(e){
+                e.preventDefault();
+                const username = document.getElementById('regUsername').value.trim();
+                const email = document.getElementById('regEmail').value.trim();
+                const pwd = document.getElementById('regPassword').value;
+                const confirm = document.getElementById('regPasswordConfirm').value;
+                const errDiv = document.getElementById('registerError');
+                if(username.length<4){ errDiv.innerText='用户名至少4位'; return; }
+                if(pwd.length<6){ errDiv.innerText='密码至少6位'; return; }
+                if(pwd !== confirm){ errDiv.innerText='两次密码不一致'; return; }
+                const users = getUsers();
+                if(users[username]){ errDiv.innerText='用户名已存在'; return; }
+                const salt = generateSalt();
+                const hash = await hashPassword(pwd, salt);
+                users[username] = { salt, hash, email: email || '', createdAt: new Date().toISOString(), role:'user', failedAttempts:0, lockUntil:null };
+                saveUsers(users);
+                showToast('注册成功，请登录', 'success');
+                document.getElementById('tabLogin').click();
+                document.getElementById('loginUsername').value = username;
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('registerError').innerText = '';
+            }
+            
+            function handleLogout(){
+                clearCurrentUser();
+                document.getElementById('dashboard').classList.remove('active');
+                document.getElementById('authOverlay').classList.remove('hidden');
+                document.getElementById('loginForm').reset();
+                document.getElementById('registerForm').reset();
+                document.getElementById('loginError').innerText = '';
+                document.getElementById('registerError').innerText = '';
+                showToast('已安全退出', 'info');
+            }
+            
+            function showToast(msg, type='info'){
+                const t = document.getElementById('toast');
+                t.textContent = msg; t.className = `toast ${type} show`;
+                clearTimeout(t._timeout); t._timeout = setTimeout(()=>t.classList.remove('show'), 2500);
+            }
+            
+            // Tab切换
+            function initAuthTabs(){
+                const tabLogin = document.getElementById('tabLogin');
+                const tabReg = document.getElementById('tabRegister');
+                const loginForm = document.getElementById('loginForm');
+                const regForm = document.getElementById('registerForm');
+                tabLogin.onclick = () => {
+                    tabLogin.classList.add('active'); tabReg.classList.remove('active');
+                    loginForm.classList.remove('hidden-form'); regForm.classList.add('hidden-form');
+                    document.getElementById('loginError').innerText = '';
+                };
+                tabReg.onclick = () => {
+                    tabReg.classList.add('active'); tabLogin.classList.remove('active');
+                    regForm.classList.remove('hidden-form'); loginForm.classList.add('hidden-form');
+                    document.getElementById('registerError').innerText = '';
+                };
+            }
+            
+            // 检查现有登录会话
+            async function checkSession(){
+                const current = getCurrentUser();
+                if(current && current.username){
+                    const userExists = getUser(current.username);
+                    if(userExists){
+                        document.getElementById('authOverlay').classList.add('hidden');
+                        document.getElementById('dashboard').classList.add('active');
+                        const avatar = document.getElementById('userAvatar');
+                        const nameSpan = document.getElementById('userDisplayName');
+                        avatar.innerText = current.username.charAt(0).toUpperCase();
+                        nameSpan.innerText = current.username;
+                        renderCards('');
+                        updateStats();
+                        return;
+                    } else { clearCurrentUser(); }
+                }
+                document.getElementById('authOverlay').classList.remove('hidden');
+                document.getElementById('dashboard').classList.remove('active');
+            }
+            
+            // 粒子背景动画
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            function resizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            function initParticles(){
+                particles = [];
+                for(let i=0;i<70;i++){
+                    particles.push({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5, radius:Math.random()*1.8+0.4, opacity:Math.random()*0.5+0.15 });
+                }
+            }
+            function animateParticles(){
+                if(!ctx) return;
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                particles.forEach(p=>{
+                    p.x+=p.vx; p.y+=p.vy;
+                    if(p.x<0) p.x=canvas.width; if(p.x>canvas.width) p.x=0;
+                    if(p.y<0) p.y=canvas.height; if(p.y>canvas.height) p.y=0;
+                    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+                    ctx.fillStyle = `rgba(0,200,240,${p.opacity})`; ctx.fill();
+                });
+                requestAnimationFrame(animateParticles);
+            }
+            window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+            resizeCanvas(); initParticles(); animateParticles();
+            
+            // 绑定事件与启动
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('contactModal').addEventListener('click', (e) => { if(e.target === document.getElementById('contactModal')) closeModal(); });
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            initAuthTabs();
+            initDefaultAccounts().then(() => { checkSession(); });
+        })();
+    </script>
+</body>
+</html>
