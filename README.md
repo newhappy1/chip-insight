@@ -9,6 +9,8 @@ markdown
 - 学习路径和资源推荐
 
 
+version 0.2 仅用于网页显示；
+
 ```bash
 git clone [https://newhappy1.github.io/chip-insight/]
 cd [chip-insight]
@@ -19,5 +21,3 @@ cd [chip-insight]
 - 邮箱：nowmyword5588@163.com
 - 或直接提 Issue / PR
 
-
-有些希望总是一起点亮，尤其开始的时候！
